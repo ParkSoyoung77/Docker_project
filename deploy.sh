@@ -18,6 +18,13 @@ echo "📦 각 서비스의 이미지를 빌드합니다..."
 sudo docker build -t auth-app:latest ./src/auth-app
 sudo docker build -t product-app:latest ./src/product-app
 
+
+# [추가] 빌드된 이미지를 k3s 내부 저장소로 동기화
+echo "🔄 이미지를 k3s로 동기화 중..."
+sudo docker save auth-app:latest | sudo k3s ctr images import -
+sudo docker save product-app:latest | sudo k3s ctr images import -
+
+
 # 4. Kubernetes 리소스 적용 (정확한 상대 경로 반영)
 echo "☸️ Kubernetes 리소스를 배포합니다 (Deployments, Services)..."
 # [수정] 말씀하신 02-apps 폴더 경로를 정확히 지정했습니다.
