@@ -5,6 +5,7 @@ metadata:
   name: startup-ingress
   annotations:
     kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: default-strip-product-prefix@kubernetescrd
 spec:
   rules:
   - http:
