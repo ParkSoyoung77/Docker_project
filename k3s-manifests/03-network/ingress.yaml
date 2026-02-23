@@ -1,16 +1,13 @@
-# k3s-manifests/03-network/ingress.yaml 수정
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: startup-ingress
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/router.middlewares: default-strip-product-prefix@kubernetescrd
 spec:
   rules:
   - http:
       paths:
-      # 1. 로그인 서비스
       - path: /auth
         pathType: Prefix
         backend:
@@ -18,18 +15,6 @@ spec:
             name: face-login-service
             port:
               number: 80
-
-      # 2. 상품 검색 서비스 (이 부분을 수정/추가)
-      - path: /product
-        pathType: Prefix
-        backend:
-          service:
-            name: product-search-service
-            port:
-              number: 80
-
-      # 3. 기본 경로
-      # change
       - path: /
         pathType: Prefix
         backend:
