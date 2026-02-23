@@ -2,17 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: startup-ingress
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - http:
       paths:
-      # 1. 로그인 서비스 (포트 없이 접속하면 로그인창이 뜨게 하려면 경로를 / 로 잡아야 합니다)
-      - path: /
+      - path: /  # 모든 요청을 허용
         pathType: Prefix
         backend:
           service:
-            name: face-login-service # 처음 접속 시 로그인부터 해야 하므로!
+            name: product-search-service # 내부 DNS 이름 사용
             port:
               number: 80

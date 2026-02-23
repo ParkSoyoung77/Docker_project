@@ -114,26 +114,13 @@ function drawOverlay(data) {
 /**
  * 4. [로그인/상품 페이지 입장] 버튼 클릭 시 실행
  */
-
 function goProduct() {
+    // [미션 반영] 클릭 시점에 포트를 떼고 Ingress(80) 주소로 이동
     const host = window.location.hostname;
-    const port = window.location.port;
-
-    statusMsg.innerText = "🚀 페이지 이동 중...";
-
-    // 1. 로컬 도커 환경 (포트가 있는 경우)
-    if (port === "8080") {
-        // 8080(Auth)에서 8083(Product)으로 강제 포트 변경
-        window.location.href = `http://${host}:8083/`;
-    } 
-    // 2. 리눅스 VM Ingress 환경 (포트가 없거나 80인 경우)
-    else {
-        const host = window.location.hostname;
-        const redirectPath = "/"; // Ingress에서 설정한 경로
+    const redirectPath = "/"; // Ingress에서 설정한 경로
     
-        statusMsg.innerText = "🚀 페이지 이동 중...";
-        window.location.href = `http://${host}${redirectPath}`;
-    }
+    statusMsg.innerText = "🚀 페이지 이동 중...";
+    window.location.href = `http://${host}${redirectPath}`;
 }
 
 // 브라우저 창 크기 변경 시 캔버스 크기 재조정
