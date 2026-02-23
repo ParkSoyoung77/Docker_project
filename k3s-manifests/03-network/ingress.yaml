@@ -28,6 +28,7 @@ spec:
               number: 80
 
       # 3. 기본 경로
+      # change
       - path: /
         pathType: Prefix
         backend:
