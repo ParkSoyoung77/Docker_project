@@ -1,15 +1,15 @@
+# k3s-manifests/03-network/ingress.yaml 수정
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: startup-ingress
   annotations:
-    # Traefik을 사용할 경우 필요한 기본 설정입니다.
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - http:
       paths:
-      # 1. 로그인 서비스로 가는 길 (우선순위를 위해 위에 배치)
+      # 1. 로그인 서비스
       - path: /auth
         pathType: Prefix
         backend:
@@ -18,7 +18,16 @@ spec:
             port:
               number: 80
 
-      # 2. 메인 서비스 (기본 경로)
+      # 2. 상품 검색 서비스 (이 부분을 수정/추가)
+      - path: /product
+        pathType: Prefix
+        backend:
+          service:
+            name: product-search-service
+            port:
+              number: 80
+
+      # 3. 기본 경로
       - path: /
         pathType: Prefix
         backend:
