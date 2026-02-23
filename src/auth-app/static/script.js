@@ -128,10 +128,11 @@ function goProduct() {
     } 
     // 2. 리눅스 VM Ingress 환경 (포트가 없거나 80인 경우)
     else {
-        // 포트 번호(30080)를 버리고, 80번 포트(Ingress)의 루트로 강제 이동시킵니다.
-        // location.origin은 "http://172.24.240.198:30080"을 가져오는데, 
-        // 여기서 포트를 떼기 위해 hostname만 사용합니다.
-        window.location.href = `http://${window.location.hostname}/`;
+        const host = window.location.hostname;
+        const redirectPath = "/"; // Ingress에서 설정한 경로
+    
+        statusMsg.innerText = "🚀 페이지 이동 중...";
+        window.location.href = `http://${host}${redirectPath}`;
     }
 }
 
