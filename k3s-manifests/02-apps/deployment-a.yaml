@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: face-login-deployment
+  labels:
+    app: face-login
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: face-login
+  template:
+    metadata:
+      labels:
+        app: face-login
+    spec:
+      containers:
+      - name: face-login
+        image: docker.io/library/auth-app:v2
+        imagePullPolicy: Never
+        command: ["uvicorn"]
+        # 루트의 main.py 실행
+        args: ["main:app", "--host", "0.0.0.0", "--port", "80"]
+        ports:
+        - containerPort: 800

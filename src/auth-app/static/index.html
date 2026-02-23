@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Biometric Access Control</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* 버튼 영역 스타일 추가 */
+        .button-area {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #startBtn {
+            background-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        #startBtn:hover {
+            background-color: #0ea5e9;
+            transform: translateY(-2px);
+        }
+
+        #entryBtn {
+            background-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+            display: none; /* 인증 성공 전까지 숨김 */
+        }
+
+        #entryBtn:hover {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        /* 비디오 컨테이너 조정 */
+        .video-wrapper {
+            position: relative;
+            display: inline-block;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
+        }
+
+        #video {
+            display: block;
+            width: 480px;
+            height: 360px;
+            transform: rotateY(180deg); /* 거울 모드 */
+        }
+
+        #overlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            transform: rotateY(180deg); /* 비디오와 동일하게 반전 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 SYSTEM ACCESS control</h1>
+        
+        <div class="video-wrapper">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="overlayCanvas"></canvas>
+        </div>
+        
+        <div id="status" class="status-box">[테스트]시스템 대기 중...</div>
+
+        <div class="button-area">
+            <button id="startBtn" class="btn" onclick="startSystem()">인증 시작</button>
+            
+            <button id="entryBtn" class="btn" onclick="goProduct()">상품 페이지 입장</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="/" class="text-muted text-decoration-none small">← 목록 대시보드로 이동</a>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-md-5">
+            <div class="detail-img-container shadow-sm">
+                <img src="{{ product.image_url }}" onerror="this.src='https://via.placeholder.com/400'">
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="mb-4">
+                <span class="text-primary small fw-600 text-uppercase">{{ product.category }}</span>
+                <h1 class="display-6 fw-600 mt-2 mb-3">{{ product.name }}</h1>
+                <h3 class="text-primary fw-600">{{ "{:,}".format(product.price) }}원</h3>
+            </div>
+
+            <div class="card border-0 bg-white p-4 mb-4 shadow-sm">
+                <h6 class="fw-600 mb-3">상품 마스터 리포트</h6>
+                <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">
+                    {{ product.description }} </p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <small class="text-muted d-block">가용 재고</small>
+                        <span class="fw-600 fs-5">{{ product.stock }}개</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <small class="text-muted d-block">등록 일시</small>
+                        <span class="fw-600 small">{{ product.created_at }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 d-flex gap-2">
+                <button class="btn btn-dark btn-lg px-5 fw-600">수정하기</button>
+                <button class="btn btn-outline-danger btn-lg px-4">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

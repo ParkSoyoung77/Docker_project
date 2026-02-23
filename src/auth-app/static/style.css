@@ -1,0 +1,40 @@
+body {
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    text-align: center;
+    width: 520px;
+}
+
+h1 { font-size: 1.5rem; margin-bottom: 1rem; color: #38bdf8; letter-spacing: 2px; }
+
+#video {
+    width: 480px;
+    height: 360px;
+    background: #000;
+    border-radius: 0.5rem;
+    border: 2px solid #334155;
+    transform: rotateY(180deg); /* 거울 모드 */
+}
+
+.status-box {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: #0f172a;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-left: 5px solid #38bdf8;
+}
