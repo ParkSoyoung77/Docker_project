@@ -22,7 +22,7 @@ spec:
         # 루트의 main.py 실행
         args: ["main:app", "--host", "0.0.0.0", "--port", "80"]
         ports:
-        - containerPort: 800
+        - containerPort: 80
         envFrom:
         - secretRef:
             name: common-env
