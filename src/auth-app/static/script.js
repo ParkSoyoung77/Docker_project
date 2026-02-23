@@ -130,7 +130,7 @@ function goProduct() {
     else {
         // Ingress가 /product 경로를 product-service로 보내준다고 가정
         // 또는 그냥 "/" 루트 경로로 이동 (Ingress 설정에 따름)
-        const redirectPath = "/product"; 
+        const redirectPath = "/"; 
         window.location.href = `http://${host}${redirectPath}`;
     }
 }
