@@ -1,0 +1,26 @@
+# 환경 변수 및 비밀번호 (가장 중요)
+.env
+*.env
+auth.json
+secrets/
+
+# OS 관련 파일
+.DS_Store
+Thumbs.db
+
+# 파이썬 관련 (팀원 1, 4)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# 도커 및 시스템 관련
+*.tar
+*.log
+data/db/
+
+# IDE 관련
+.vscode/
+.idea/
