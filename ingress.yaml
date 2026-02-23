@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: project-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik  # k3s는 기본적으로 traefik을 사용합니다.
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /          # 메인 접속(로그인/카메라)
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8001
+      - path: /product   # 상품 페이지 이동 경로
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 8081

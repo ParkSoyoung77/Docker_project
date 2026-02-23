@@ -3,27 +3,31 @@ version: '3.8'
 services:
   # 1. 로그인 서비스 (Auth App)
   auth-app:
+    env_file:
+      - ./.env  # 최상위 경로로 수정
     build:
       context: ./src/auth-app
       dockerfile: Dockerfile
     container_name: auth-service
     ports:
-      - "8080:8080"
-    env_file:
-      - ./src/auth-app/.env
+      - "8080:8001"
     restart: always
-
+    deploy:
+      resources:
+        limits:
+          memory: 2G
   # 2. 상품 검색 서비스 (Product App)
   product-app:
+    env_file:
+      - ./.env  # 동일하게 최상위 경로 참조
     build:
       context: ./src/product-app
       dockerfile: Dockerfile
     container_name: product-service
     ports:
-      - "8081:8081"
-    env_file:
-      - ./src/product-app/.env
+      - "8083:8081"  # 이 줄이 정확히 들어있는지, 들여쓰기가 맞는지 확인!
     restart: always
+
 
   # 3. 데이터베이스 (MariaDB - 필요시)
   # db:

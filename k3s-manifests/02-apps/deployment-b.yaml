@@ -23,3 +23,6 @@ spec:
         args: ["app.main:app", "--host", "0.0.0.0", "--port", "80"]
         ports:
         - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: common-env

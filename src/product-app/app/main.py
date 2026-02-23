@@ -32,3 +32,8 @@ async def detail(request: Request, product_id: int):
     if not product:
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없습니다.")
     return templates.TemplateResponse("detail.html", {"request": request, "product": product})
+
+if __name__ == "__main__":
+    import uvicorn
+    # 0.0.0.0으로 열어야 컨테이너 밖(윈도우)에서 접속이 가능합니다!
+    uvicorn.run(app, host="0.0.0.0", port=8081)
