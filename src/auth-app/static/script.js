@@ -130,7 +130,7 @@ function goProduct() {
     else {
         // 호스트 주소를 직접 계산하지 않고, 현재 도메인의 루트("/")로 리다이렉트합니다.
         // 이렇게 하면 포트 번호(30080)를 떼고 Ingress 기본 포트(80)로 자연스럽게 넘어갑니다.
-        window.location.href = "/";
+        window.location.href = "/product";
     }
 }
 

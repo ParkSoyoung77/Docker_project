@@ -8,20 +8,11 @@ spec:
   rules:
   - http:
       paths:
-      # 1. 로그인 서비스 (구체적인 경로를 반드시 위에 배치)
-      - path: /auth
-        pathType: Prefix
-        backend:
-          service:
-            name: face-login-service
-            port:
-              number: 80
-
-      # 2. 메인 상품 서비스 (루트 경로를 아래에 배치)
+      # 1. 로그인 서비스 (포트 없이 접속하면 로그인창이 뜨게 하려면 경로를 / 로 잡아야 합니다)
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: product-search-service
+            name: face-login-service # 처음 접속 시 로그인부터 해야 하므로!
             port:
               number: 80
