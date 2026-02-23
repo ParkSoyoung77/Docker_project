@@ -128,10 +128,9 @@ function goProduct() {
     } 
     // 2. 리눅스 VM Ingress 환경 (포트가 없거나 80인 경우)
     else {
-        // Ingress가 /product 경로를 product-service로 보내준다고 가정
-        // 또는 그냥 "/" 루트 경로로 이동 (Ingress 설정에 따름)
-        const redirectPath = "/"; 
-        window.location.href = `http://${host}${redirectPath}`;
+        // 호스트 주소를 직접 계산하지 않고, 현재 도메인의 루트("/")로 리다이렉트합니다.
+        // 이렇게 하면 포트 번호(30080)를 떼고 Ingress 기본 포트(80)로 자연스럽게 넘어갑니다.
+        window.location.href = "/";
     }
 }
 
