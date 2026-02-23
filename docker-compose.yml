@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # 1. 로그인 서비스 (Auth App)
+  auth-app:
+    build:
+      context: ./src/auth-app
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./src/auth-app/.env
+    restart: always
+
+  # 2. 상품 검색 서비스 (Product App)
+  product-app:
+    build:
+      context: ./src/product-app
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./src/product-app/.env
+    restart: always
+
+  # 3. 데이터베이스 (MariaDB - 필요시)
+  # db:
+  #   image: mariadb:10.6
+  #   container_name: shared-db
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+  #   ports:
+  #     - "3306:3306"
