@@ -2,14 +2,27 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: startup-ingress
+  annotations:
+    # Traefik을 사용할 경우 필요한 기본 설정입니다.
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - http:
       paths:
-      - path: /  # 모든 요청을 허용
+      # 1. 로그인 서비스로 가는 길 (우선순위를 위해 위에 배치)
+      - path: /auth
         pathType: Prefix
         backend:
           service:
-            name: product-search-service # 내부 DNS 이름 사용 (미션 성공 포인트!)
+            name: face-login-service
+            port:
+              number: 80
+
+      # 2. 메인 서비스 (기본 경로)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: product-search-service
             port:
               number: 80
