@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: product-search-service
 spec:
-  type: NodePort  # ClusterIP에서 NodePort로 변경
+  type: ClusterIP   # ← NodePort에서 변경
   selector:
     app: product-search
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30081  # 30081 포트로 강제 지정
+      # nodePort 줄 삭제
