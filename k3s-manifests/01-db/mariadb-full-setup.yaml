@@ -5,10 +5,28 @@ metadata:
   name: mariadb-secret
 type: Opaque
 stringData:
-  # 여기에 사용할 비밀번호를 적으세요. (나중에 Worker3 코드와 일치시켜야 함)
   root-password: "1234"
 ---
-# 2. 데이터 보존을 위한 저장소 (PVC)
+# 2. 초기화 SQL (테이블 자동 생성)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-initdb
+data:
+  init.sql: |
+    USE shop;
+    CREATE TABLE IF NOT EXISTS products (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      category VARCHAR(100),
+      price INT DEFAULT 0,
+      description TEXT,
+      stock INT DEFAULT 0,
+      image_url VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+---
+# 3. 데이터 보존을 위한 저장소 (PVC)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -18,9 +36,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi # 20GB 디스크 중 5GB 사용
+      storage: 5Gi
 ---
-# 3. MariaDB 실행 정의 (Deployment)
+# 4. MariaDB 실행 정의 (Deployment)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,14 +48,14 @@ spec:
     matchLabels:
       app: mariadb
   strategy:
-    type: Recreate # 데이터 안전을 위해 기존 파드 종료 후 생성
+    type: Recreate
   template:
     metadata:
       labels:
         app: mariadb
     spec:
       nodeSelector:
-        kubernetes.io/hostname: k3s-worker1 # 계획대로 Worker1 노드에 배치
+        kubernetes.io/hostname: k3s-worker1
       containers:
       - name: mariadb
         image: mariadb:10.6
@@ -50,16 +68,21 @@ spec:
               name: mariadb-secret
               key: root-password
         - name: MARIADB_DATABASE
-          value: "shop" # Worker3가 사용할 기본 데이터베이스
+          value: "shop"
         volumeMounts:
         - name: mariadb-storage
           mountPath: /var/lib/mysql
+        - name: initdb
+          mountPath: /docker-entrypoint-initdb.d  # MariaDB가 시작 시 자동 실행
       volumes:
       - name: mariadb-storage
         persistentVolumeClaim:
           claimName: mariadb-pvc
+      - name: initdb
+        configMap:
+          name: mariadb-initdb
 ---
-# 4. 내부 통신 통로 (Service)
+# 5. 내부 통신 통로 (Service)
 apiVersion: v1
 kind: Service
 metadata:
@@ -71,4 +94,4 @@ spec:
     - protocol: TCP
       port: 3306
       targetPort: 3306
-  type: ClusterIP # 내부 통신 전용
+  type: ClusterIP
