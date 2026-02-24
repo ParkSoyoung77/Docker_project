@@ -34,33 +34,54 @@ for node in "${WORKER_NODES[@]}"; do
     sshpass -p "$WORKER_PASS" ssh-copy-id -o StrictHostKeyChecking=no "$WORKER_USER@$node"
 done
 
-# --- [4. 마스터 레지스트리 컨테이너 실행] ---
+# --- [4. 마스터 노드 Docker insecure registry 설정] ---
+echo "🐳 마스터 노드 Docker insecure registry 설정 중..."
+cat <<EOF | sudo tee /etc/docker/daemon.json > /dev/null
+{
+  "insecure-registries": ["$REGISTRY"]
+}
+EOF
+sudo systemctl restart docker
+echo "✅ 마스터 Docker 설정 완료"
+
+# --- [5. 마스터 레지스트리 컨테이너 실행] ---
 if [ ! "$(sudo docker ps -q -f name=registry)" ]; then
     echo "📦 로컬 레지스트리 창고 생성 중..."
     if [ "$(sudo docker ps -aq -f name=registry)" ]; then sudo docker rm registry; fi
     sudo docker run -d -p 5000:5000 --restart=always --name registry registry:2
 fi
 
-# --- [5. 노드별 registries.yaml 설정 (SSH 활용)] ---
+# --- [6. 노드별 설정 (SSH 활용)] ---
 setup_node() {
     local target=$1
     echo "⚙️  $target 노드 설정 및 k3s 재시작 중..."
-    
-    local config="mirrors:
+
+    local registries_config="mirrors:
   \"$REGISTRY\":
     endpoint:
       - \"http://$REGISTRY\""
 
-    # 위에서 키를 복사했으므로 이제 비밀번호 없이 접속 가능합니다.
+    local docker_config="{
+  \"insecure-registries\": [\"$REGISTRY\"]
+}"
+
     ssh -o StrictHostKeyChecking=no "$WORKER_USER@$target" "
+        # k3s registries.yaml 설정
         sudo mkdir -p /etc/rancher/k3s
-        echo '$config' | sudo tee /etc/rancher/k3s/registries.yaml > /dev/null
+        echo '$registries_config' | sudo tee /etc/rancher/k3s/registries.yaml > /dev/null
+
+        # Docker insecure registry 설정
+        echo '$docker_config' | sudo tee /etc/docker/daemon.json > /dev/null
+        sudo systemctl restart docker
+
+        # k3s 재시작
         if systemctl is-active --quiet k3s; then
             sudo systemctl restart k3s
         else
             sudo systemctl restart k3s-agent
         fi
     "
+    echo "✅ $target 설정 완료"
 }
 
 # 마스터(자신)와 모든 워커 노드 순회
