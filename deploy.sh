@@ -46,7 +46,7 @@ sudo kubectl wait --for=condition=ready pod -l app=mariadb --timeout=120s
 # 6. Kubernetes 앱 리소스 적용
 echo "☸️ Kubernetes 리소스를 배포합니다..."
 sed "s|image: .*auth-app:v2|image: $REGISTRY/auth-app:v2|g" ./k3s-manifests/02-apps/deployment-a.yaml | sudo kubectl apply -f -
-sed "s|image: .*product-app:v1|image: $REGISTRY/product-app:v1.1|g" ./k3s-manifests/02-apps/deployment-b.yaml | sudo kubectl apply -f -
+sed "s|image: .*product-app:v1.1|image: $REGISTRY/product-app:v1.1|g" ./k3s-manifests/02-apps/deployment-b.yaml | sudo kubectl apply -f -
 sed "s|image: .*worker3:latest|image: $REGISTRY/worker3:latest|g" ./k3s-manifests/01-db/worker3-deployment.yaml | sudo kubectl apply -f -
 
 # 서비스 적용
