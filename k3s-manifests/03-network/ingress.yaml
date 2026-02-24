@@ -16,7 +16,15 @@ spec:
             name: product-search-service
             port:
               number: 80
-      # 2. 나머지 모든 기본 경로는 로그인 서비스로
+      # 2. /static 경로도 상품 서비스로 (이미지 등 정적 파일)
+      - path: /static
+        pathType: Prefix
+        backend:
+          service:
+            name: product-search-service
+            port:
+              number: 80
+      # 3. 나머지 모든 기본 경로는 로그인 서비스로
       - path: /
         pathType: Prefix
         backend:
