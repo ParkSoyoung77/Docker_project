@@ -24,13 +24,15 @@ build_and_push() {
     local name=$1
     local path=$2
     local tag=$3
+    echo "🗑️  기존 $name 이미지 삭제 중..."
+    sudo docker rmi $REGISTRY/$name:$tag 2>/dev/null || true
     echo "🔨 $name 빌드 중..."
-    sudo docker build -t $REGISTRY/$name:$tag $path
+    sudo docker build --no-cache -t $REGISTRY/$name:$tag $path
     sudo docker push $REGISTRY/$name:$tag
 }
 
 build_and_push "auth-app" "./src/auth-app" "v2"
-build_and_push "product-app" "./src/product-app" "v1"
+build_and_push "product-app" "./src/product-app" "v1.1"
 build_and_push "worker3" "./src/worker-notion" "latest"
 
 # 4. MariaDB 먼저 배포 (앱보다 DB가 먼저 떠야 함)
@@ -44,7 +46,7 @@ sudo kubectl wait --for=condition=ready pod -l app=mariadb --timeout=120s
 # 6. Kubernetes 앱 리소스 적용
 echo "☸️ Kubernetes 리소스를 배포합니다..."
 sed "s|image: .*auth-app:v2|image: $REGISTRY/auth-app:v2|g" ./k3s-manifests/02-apps/deployment-a.yaml | sudo kubectl apply -f -
-sed "s|image: .*product-app:v1|image: $REGISTRY/product-app:v1|g" ./k3s-manifests/02-apps/deployment-b.yaml | sudo kubectl apply -f -
+sed "s|image: .*product-app:v1|image: $REGISTRY/product-app:v1.1|g" ./k3s-manifests/02-apps/deployment-b.yaml | sudo kubectl apply -f -
 sed "s|image: .*worker3:latest|image: $REGISTRY/worker3:latest|g" ./k3s-manifests/01-db/worker3-deployment.yaml | sudo kubectl apply -f -
 
 # 서비스 적용
