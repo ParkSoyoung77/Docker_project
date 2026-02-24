@@ -1,25 +1,25 @@
-@app.get("/product")
-async def index(request: Request, name: str = Query(None), category: str = Query(None)):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        query = "SELECT * FROM products WHERE 1=1"
-        params = []
-        if name:
-            query += " AND name LIKE %s"
-            params.append(f"%{name}%")
-        if category:
-            query += " AND category LIKE %s"
-            params.append(f"%{category}%")
-        cursor.execute(query, params)
-        products = cursor.fetchall()
-    return templates.TemplateResponse("index.html", {"request": request, "products": products})
+import pymysql  # sqlite3 대신 pymysql 사용
+import os
+from contextlib import contextmanager
 
-@app.get("/product/detail/{product_id}")
-async def detail(request: Request, product_id: int):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
-        product = cursor.fetchone()
-    if not product:
-        raise HTTPException(status_code=404, detail="상품을 찾을 수 없습니다.")
-    return templates.TemplateResponse("detail.html", {"request": request, "product": product})
+# 환경 변수에서 접속 정보를 가져옵니다 (deploy.sh에서 넣어줄 정보)
+DB_HOST = os.getenv("DB_HOST", "mariadb")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
+DB_NAME = os.getenv("DB_NAME", "shop")
+
+@contextmanager
+def get_db():
+    # MariaDB에 접속
+    conn = pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        db=DB_NAME,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor  # sqlite3.Row와 비슷한 역할
+    )
+    try:
+        yield conn
+    finally:
+        conn.close()
