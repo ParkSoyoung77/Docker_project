@@ -58,8 +58,8 @@ sudo docker build -t worker3:latest ./src/worker-notion/
 
 # 6. Worker3 배포
 echo "🚀 Worker3 앱 배포 중..."
-sudo kubectl apply -f ./k3s-manifests/01-db/worker3-deployment.yaml
 sudo docker save worker3:latest | sudo k3s ctr images import -
+sudo kubectl apply -f ./k3s-manifests/01-db/worker3-deployment.yaml
 
 # 🔄 빌드된 최신 이미지를 컨테이너에 강제 반영 (Rollout Restart)
 echo "♻️ 모든 서비스를 최신 이미지로 재시작합니다..."
