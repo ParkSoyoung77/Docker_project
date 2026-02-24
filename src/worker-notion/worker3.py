@@ -12,6 +12,12 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 client = OpenAI(api_key=OPENAI_KEY)
 
+NOTION_HEADERS = {
+    "Authorization": f"Bearer {NOTION_TOKEN}",
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json"
+}
+
 def get_db_connection():
     """MariaDB 연결 객체를 반환합니다."""
     return mysql.connector.connect(
@@ -26,7 +32,6 @@ def is_already_exists(name):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # 이름(name)을 기준으로 중복 확인
         cursor.execute("SELECT id FROM products WHERE name = %s", (name,))
         result = cursor.fetchone()
         return result is not None
@@ -61,9 +66,45 @@ def insert_to_db(product_data):
         """
         cursor.execute(sql, product_data)
         conn.commit()
-        print(f"✅ MariaDB 배달 성공: {product_data[0]}")
+        print(f"✅ MariaDB 저장 성공: {product_data[0]}")
     except mysql.connector.Error as err:
         print(f"❌ DB 저장 에러: {err}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+def update_notion_page(page_id, name, category, price, description, stock, image_url):
+    """MariaDB 데이터로 노션 페이지를 업데이트합니다."""
+    url = f"https://api.notion.com/v1/pages/{page_id}"
+    data = {
+        "properties": {
+            "category": {
+                "select": {"name": category} if category and category != '미분류' else None
+            },
+            "price": {"number": price},
+            "stock": {"number": stock},
+            "image_url": {"url": image_url if image_url else None},
+            "description": {
+                "rich_text": [{"text": {"content": description}}]
+            }
+        }
+    }
+    res = requests.patch(url, headers=NOTION_HEADERS, json=data)
+    if res.status_code == 200:
+        print(f"✅ 노션 업데이트 성공: {name}")
+    else:
+        print(f"⚠️ 노션 업데이트 실패: {name} - {res.text}")
+
+def get_db_product(name):
+    """MariaDB에서 상품 데이터를 가져옵니다."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM products WHERE name = %s", (name,))
+        return cursor.fetchone()
+    except mysql.connector.Error as err:
+        print(f"❌ DB 조회 에러: {err}")
+        return None
     finally:
         if 'conn' in locals() and conn.is_connected():
             conn.close()
@@ -73,46 +114,56 @@ def main():
     
     while True:
         url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-        headers = {
-            "Authorization": f"Bearer {NOTION_TOKEN}",
-            "Notion-Version": "2022-06-28",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.post(url, headers=headers)
+        response = requests.post(url, headers=NOTION_HEADERS)
+
         if response.status_code == 200:
             pages = response.json().get('results', [])
             
             for page in pages:
                 props = page.get('properties', {})
+                page_id = page.get('id')
+
                 try:
-                    # 노션 컬럼 (소문자 기준)
-                    name = props.get('name', {}).get('title', [{}])[0].get('plain_text', '')
-                    if not name: continue
-
-                    # [중복 체크] 이미 DB에 있는 상품인지 확인
-                    if is_already_exists(name):
-                        # print(f"⏭️ '{name}'은(는) 이미 DB에 존재하여 건너뜁니다.")
+                    title_list = props.get('name', {}).get('title', [])
+                    if not title_list:
                         continue
-                    
+                    name = title_list[0].get('plain_text', '')
+                    if not name:
+                        continue
 
+                    # [Case 1] MariaDB에 이미 있는 상품 → 노션을 MariaDB 기준으로 업데이트
+                    if is_already_exists(name):
+                        db_product = get_db_product(name)
+                        if db_product:
+                            update_notion_page(
+                                page_id,
+                                name,
+                                db_product.get('category', '미분류'),
+                                db_product.get('price', 0),
+                                db_product.get('description', ''),
+                                db_product.get('stock', 0),
+                                db_product.get('image_url', '')
+                            )
+                        continue
+
+                    # [Case 2] 노션에만 있는 새 상품 → GPT description 생성 후 MariaDB INSERT + 노션 업데이트
                     category = (props.get('category', {}).get('select') or {}).get('name', '미분류')
                     price = props.get('price', {}).get('number') or 0
                     stock = props.get('stock', {}).get('number') or 0
                     image_url = props.get('image_url', {}).get('url') or ''
- 
 
                     print(f"📦 새 상품 발견: '{name}' (GPT 설명 생성 중...)")
                     description = get_gpt_description(name, category)
-                    
+
                     product_data = (name, category, price, description, stock, image_url)
                     insert_to_db(product_data)
-                    
+
+                    # 노션 description도 업데이트
+                    update_notion_page(page_id, name, category, price, description, stock, image_url)
+
                 except Exception as e:
                     print(f"⚠️ 데이터 처리 중 오류: {e}")
-                    print(f"⚠️ 문제 props: {props}") 
-                
-        
+
         # 30초마다 한 번씩 노션 확인
         time.sleep(30)
 
