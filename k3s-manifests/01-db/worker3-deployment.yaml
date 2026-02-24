@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker3-deployment
+  labels:
+    app: worker3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker3
+  template:
+    metadata:
+      labels:
+        app: worker3
+    spec:
+      # 이미지 계획대로 k3s-worker1 노드에만 배치합니다.
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker1
+      containers:
+      - name: worker3-app
+        image: worker3:latest
+        # 로컬에서 빌드한 이미지를 바로 사용하기 위해 설정합니다.
+        imagePullPolicy: Never
+        env:
+        # 1. 노션 API 토큰 (.env의 NOTION_API_KEY와 매칭)
+        - name: NOTION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: common-env
+              key: NOTION_API_KEY
+        # 2. 노션 데이터베이스 ID
+        - name: NOTION_DB_ID
+          valueFrom:
+            secretKeyRef:
+              name: common-env
+              key: NOTION_DB_ID
+        # 3. OpenAI API 키
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: common-env
+              key: OPENAI_API_KEY
+        # 4. DB 접속을 위한 루트 비밀번호
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: common-env
+              key: DB_ROOT_PASSWORD
+        # 파이썬 로그가 실시간으로 출력되도록 설정
+        - name: PYTHONUNBUFFERED
+          value: "1"

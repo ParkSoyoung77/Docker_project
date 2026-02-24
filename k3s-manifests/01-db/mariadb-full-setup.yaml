@@ -1,0 +1,74 @@
+# 1. DB 비밀번호 설정 (Secret)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mariadb-secret
+type: Opaque
+stringData:
+  # 여기에 사용할 비밀번호를 적으세요. (나중에 Worker3 코드와 일치시켜야 함)
+  root-password: "1234"
+---
+# 2. 데이터 보존을 위한 저장소 (PVC)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi # 20GB 디스크 중 5GB 사용
+---
+# 3. MariaDB 실행 정의 (Deployment)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate # 데이터 안전을 위해 기존 파드 종료 후 생성
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker1 # 계획대로 Worker1 노드에 배치
+      containers:
+      - name: mariadb
+        image: mariadb:10.6
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: root-password
+        - name: MARIADB_DATABASE
+          value: "shop" # Worker3가 사용할 기본 데이터베이스
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mariadb-storage
+        persistentVolumeClaim:
+          claimName: mariadb-pvc
+---
+# 4. 내부 통신 통로 (Service)
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-service
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP # 내부 통신 전용
