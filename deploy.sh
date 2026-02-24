@@ -32,7 +32,9 @@ sudo kubectl apply -f ./k3s-manifests/02-apps/service-b.yaml
 
 # 5. Ingress 설정 적용
 echo "🌐 Ingress 설정을 적용합니다..."
-sudo kubectl apply -f ./ingress.yaml
+# 수정
+sudo kubectl delete ingress --all
+sudo kubectl apply -f ./k3s-manifests/03-network/ingress.yaml
 
 # 6. 배포 상태 확인
 echo "⏳ 배포 완료! 파드 상태를 확인합니다..."
