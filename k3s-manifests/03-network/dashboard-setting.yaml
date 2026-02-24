@@ -1,0 +1,31 @@
+# [1] 비밀번호 검사기 (Middleware)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dashboard-auth-middleware
+  namespace: kube-system
+spec:
+  basicAuth:
+    # deploy.sh 스크립트가 만들어줄 Secret의 이름을 참조합니다.
+    secret: traefik-dashboard-auth
+
+---
+# [2] 라우팅 규칙 (IngressRoute)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: kube-system
+spec:
+  entryPoints:
+    - web
+  routes:
+    # Host 규칙 삭제! 오직 경로만 봅니다. (데이터 통신을 위해 /api는 필수 유지)
+    - match: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+      middlewares:
+        # 이 경로로 들어오면 무조건 비밀번호를 묻습니다.
+        - name: dashboard-auth-middleware
