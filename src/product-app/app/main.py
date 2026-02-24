@@ -27,7 +27,7 @@ async def index(request: Request, name: str = Query(None), category: str = Query
         products = cursor.fetchall()
     return templates.TemplateResponse("index.html", {"request": request, "products": products})
 
-@app.get("/product/detail/{product_id}")
+@app.get("/product/{product_id}")
 async def detail(request: Request, product_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
