@@ -50,7 +50,7 @@ echo "📋 테이블 구조를 점검합니다..."
 # 파드 이름을 정확히 집어내기 위해 -n default(혹은 사용중인 네임스페이스)를 명시하면 더 좋습니다.
 MARIADB_POD=$(sudo kubectl get pod -l app=mariadb -o jsonpath='{.items[0].metadata.name}')
 
-sudo kubectl exec -i $MARIADB_POD -- mariadb -u root -p1234 -e "USE shop; CREATE TABLE IF NOT EXISTS products (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, category VARCHAR(100), price INT DEFAULT 0, description TEXT, stock INT DEFAULT 0, image_url VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+sudo kubectl exec -i $MARIADB_POD -- mariadb -u root -p1234 -e "USE shop; CREATE TABLE IF NOT EXISTS products (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, category VARCHAR(100), price INT DEFAULT 0, description TEXT, stock INT DEFAULT 0, image_url VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
 
 # 5. Worker3 이미지 빌드 (경로: src/worker-notion)
 echo "🏗️ Worker3 배달원 앱 빌드 중..."
