@@ -117,7 +117,8 @@ function drawOverlay(data) {
 function goProduct() {
     // [미션 반영] 클릭 시점에 포트를 떼고 Ingress(80) 주소로 이동
     const host = window.location.hostname;
-    const redirectPath = "/"; // Ingress에서 설정한 경로
+// 2. [수정] Ingress에서 상품 서비스용으로 비워둔 '/product' 경로를 사용합니다.
+    const redirectPath = "/product";
     
     statusMsg.innerText = "🚀 페이지 이동 중...";
     window.location.href = `http://${host}${redirectPath}`;
