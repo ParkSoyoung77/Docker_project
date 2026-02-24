@@ -108,6 +108,8 @@ def main():
                     
                 except Exception as e:
                     print(f"⚠️ 데이터 처리 중 오류: {e}")
+                    print(f"⚠️ 문제 props: {props}") 
+                
         
         # 30초마다 한 번씩 노션 확인
         time.sleep(30)
