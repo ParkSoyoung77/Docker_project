@@ -17,7 +17,7 @@ spec:
       containers:
       - name: face-login
         image: docker.io/library/auth-app:v2
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command: ["uvicorn"]
         # 루트의 main.py 실행
         args: ["main:app", "--host", "0.0.0.0", "--port", "80"]
