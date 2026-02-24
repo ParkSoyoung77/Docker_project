@@ -17,7 +17,7 @@ spec:
       containers:
       - name: product-search
         image: docker.io/library/product-app:v1
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         command: ["uvicorn"]
         # app/ 폴더 내의 main.py 실행 (중요)
         args: ["app.main:app", "--host", "0.0.0.0", "--port", "80"]
