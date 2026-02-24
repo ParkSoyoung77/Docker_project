@@ -95,10 +95,10 @@ def main():
                         # print(f"⏭️ '{name}'은(는) 이미 DB에 존재하여 건너뜁니다.")
                         continue
                     
-                    category = props.get('category', {}).get('select', {}).get('name', '미분류')
-                    price = props.get('price', {}).get('number', 0)
-                    stock = props.get('stock', {}).get('number', 0)
-                    image_url = props.get('image_url', {}).get('url', '')
+                    category = (props.get('category') or {}).get('select', {}).get('name', '미분류')
+                    price = (props.get('price') or {}).get('number', 0)
+                    stock = (props.get('stock') or {}).get('number', 0)
+                    image_url = (props.get('image_url') or {}).get('url', '')
 
                     print(f"📦 새 상품 발견: '{name}' (GPT 설명 생성 중...)")
                     description = get_gpt_description(name, category)
