@@ -53,7 +53,7 @@ async def authenticate(data: AuthData):
             return {
                 "status": "success",
                 # DNS 이름 대신, Ingress에서 설정할 '경로'를 적어줍니다.
-                "redirect_url": "/" 
+                "redirect_url": "/product" 
             }     
         # 인식 실패 시
         return {
@@ -70,3 +70,4 @@ if __name__ == "__main__":
     # 로컬 테스트 및 컨테이너 배포를 위해 8001번 포트 사용
     # product_service(8000)와 겹치지 않도록 설정함
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
