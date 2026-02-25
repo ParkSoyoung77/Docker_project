@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: notion-to-mariadb-sync
+spec:
+  schedule: "*/1 * * * *"  # 1분마다 실행
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: notion-sync
+            tier: worker
+        spec:
+          nodeSelector:
+            kubernetes.io/hostname: k3s-worker1
+          containers:
+          - name: sync-worker
+            image: worker3:latest      # 빌드한 이미지
+            imagePullPolicy: Never    # 로컬 빌드 이미지 사용 시 필수
+            env:
+            # MariaDB 서비스 이름(mariadb-service)에 맞게 호스트 설정
+            - name: DB_HOST
+              value: "mariadb-service"
+            - name: DB_USER
+              value: "root"
+            - name: DB_NAME
+              value: "shop"
+            # 시크릿에서 가져오는 값들
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: common-env
+                  key: DB_ROOT_PASSWORD
+            - name: NOTION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: common-env
+                  key: NOTION_API_KEY
+            - name: NOTION_DB_ID
+              valueFrom:
+                secretKeyRef:
+                  name: common-env
+                  key: NOTION_DB_ID
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: common-env
+                  key: OPENAI_API_KEY
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          restartPolicy: OnFailure
