@@ -179,14 +179,22 @@ def main():
                             )
                         continue
 
-                    # [Case 2] 새 상품 → GPT description → MariaDB INSERT → ChromaDB 저장 → 노션 업데이트
+                    # [Case 2] 새 상품 → description 확인 → MariaDB INSERT → ChromaDB 저장 → 노션 업데이트
                     category = (props.get('category', {}).get('select') or {}).get('name', '미분류')
                     price = props.get('price', {}).get('number') or 0
                     stock = props.get('stock', {}).get('number') or 0
                     image_url = props.get('image_url', {}).get('url') or ''
 
-                    print(f"📦 새 상품 발견: '{name}' (GPT 설명 생성 중...)")
-                    description = get_gpt_description(name, category)
+                    # 노션에 description이 있으면 그대로, 없으면 GPT 생성
+                    notion_desc_list = props.get('description', {}).get('rich_text', [])
+                    notion_description = notion_desc_list[0].get('plain_text', '') if notion_desc_list else ''
+
+                    if notion_description:
+                        print(f"📦 새 상품 발견: '{name}' (노션 설명 사용)")
+                        description = notion_description
+                    else:
+                        print(f"📦 새 상품 발견: '{name}' (GPT 설명 생성 중...)")
+                        description = get_gpt_description(name, category)
 
                     product_data = (name, category, price, description, stock, image_url)
                     product_id = insert_to_db(product_data)
