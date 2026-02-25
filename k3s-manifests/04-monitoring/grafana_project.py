@@ -12,7 +12,7 @@ GRAFANA_URL = os.getenv("GRAFANA_URL")
 GRAFANA_TOKEN = os.getenv("GRAFANA_TOKEN")
 GRAFANA_UID = os.getenv("GRAFANA_UID")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+NOTION_TOKEN = os.getenv("NOTION_API_KEY")
 NOTION_DB_ID = os.getenv("NOTION_DB_ID")
 # ==========================================================
 
