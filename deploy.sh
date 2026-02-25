@@ -150,10 +150,17 @@ GRAFANA_UID=$(curl -s -X POST "$GRAFANA_URL/api/datasources" \
     python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasource',{}).get('uid','') or d.get('uid',''))" 2>/dev/null || echo "")
 
 echo "🔑 API 토큰 발급 중..."
-GRAFANA_TOKEN=$(curl -s -X POST "$GRAFANA_URL/api/auth/keys" \
+SA_TIMESTAMP=$(date +%s)
+SA_ID=$(curl -s -X POST "$GRAFANA_URL/api/serviceaccounts" \
     -H "Content-Type: application/json" \
     -u admin:admin \
-    -d '{"name":"auto-token-'$(date +%s)'","role":"Admin"}' | \
+    -d "{\"name\":\"auto-sa-$SA_TIMESTAMP\",\"role\":\"Admin\"}" | \
+    python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
+
+GRAFANA_TOKEN=$(curl -s -X POST "$GRAFANA_URL/api/serviceaccounts/$SA_ID/tokens" \
+    -H "Content-Type: application/json" \
+    -u admin:admin \
+    -d "{\"name\":\"auto-token-$SA_TIMESTAMP\"}" | \
     python3 -c "import sys,json; print(json.load(sys.stdin).get('key',''))" 2>/dev/null || echo "")
 
 # .env 업데이트
