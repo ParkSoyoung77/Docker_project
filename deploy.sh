@@ -38,7 +38,6 @@ build_and_push "worker3" "./src/worker-notion" "latest"
 # 4. MariaDB 먼저 배포 (앱보다 DB가 먼저 떠야 함)
 echo "📦 MariaDB 인프라를 배포합니다..."
 sudo kubectl apply -f ./k3s-manifests/01-db/mariadb-full-setup.yaml
-
 sudo kubectl apply -f ./k3s-manifests/02-apps/chromadb-setup.yaml
 
 # 5. DB가 준비될 때까지 대기
@@ -67,11 +66,58 @@ sudo kubectl rollout restart deployment/face-login-deployment
 sudo kubectl rollout restart deployment/product-search-deployment
 sudo kubectl rollout restart deployment/worker3-deployment
 
-# 9. 대시보드 배포
+# 8.5 대시보드 배포
 echo "📊 대시보드를 배포합니다..."
 bash ~/Docker_project/deploy-dashboard.sh
 
-# 10. 배포 상태 확인
+# 8.6 메트릭 서버 설치
+echo "📈 메트릭 서버를 설치합니다..."
+sudo kubectl apply -f ./k3s-manifests/04-monitoring/components.yaml
+echo "⏳ 메트릭 서버 파드 확인 중..."
+sudo kubectl get pods -n kube-system -l k8s-app=metrics-server
+
+# 8.7 Helm 설치 확인 및 Loki 스택 설치
+echo "📦 Helm 저장소 추가 및 업데이트..."
+helm repo add grafana https://grafana.github.io/helm-charts 2>/dev/null || true
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+helm repo update
+
+echo "📋 Loki 설치 중..."
+helm upgrade --install loki grafana/loki \
+    --set loki.auth_enabled=false \
+    --set deploymentMode=SingleBinary \
+    --set loki.commonConfig.replication_factor=1 \
+    --set loki.storage.type=filesystem \
+    --set loki.useTestSchema=true \
+    --set loki.resources.limits.memory=512Mi \
+    --set loki.resources.requests.memory=256Mi \
+    --set read.replicas=0 \
+    --set write.replicas=0 \
+    --set backend.replicas=0 \
+    --set canary.enabled=false
+
+echo "📋 Promtail 설치 중..."
+helm upgrade --install promtail grafana/promtail \
+    --set "config.clients[0].url=http://loki-gateway/loki/api/v1/push"
+
+# 8.8 k9s 설치
+echo "🖥️ k9s 설치 중..."
+curl -sS https://webinstall.dev/k9s | bash 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+
+# 8.9 Grafana 설치
+echo "📊 Grafana 설치 중 (포트: 31081)..."
+helm upgrade --install my-grafana grafana/grafana \
+    --set service.type=NodePort \
+    --set service.nodePort=31081 \
+    --set adminPassword=admin
+
+# 8.10 Prometheus 설치
+echo "🔥 Prometheus 설치 중..."
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+    -n monitoring --create-namespace
+
+# 9. 배포 상태 확인
 echo "⏳ 배포 완료! 파드 상태를 확인합니다..."
 sleep 10
 sudo kubectl get pods -o wide
