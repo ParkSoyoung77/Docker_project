@@ -138,7 +138,7 @@ sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install prometheus prom
 # 8.14 Grafana 토큰 자동 발급 및 .env 업데이트
 echo "🔑 Grafana 토큰 자동 발급 중..."
 sudo kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --timeout=180s 2>/dev/null || true
-sleep 10
+sleep 30
 
 GRAFANA_URL="http://$MASTER_IP:31081"
 
