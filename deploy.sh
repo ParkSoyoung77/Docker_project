@@ -39,13 +39,11 @@ build_and_push "worker3" "./src/worker-notion" "latest"
 echo "📦 MariaDB 인프라를 배포합니다..."
 sudo kubectl apply -f ./k3s-manifests/01-db/mariadb-full-setup.yaml
 
-
 sudo kubectl apply -f ./k3s-manifests/02-apps/chromadb-setup.yaml
 
 # 5. DB가 준비될 때까지 대기
 echo "⏳ DB가 활성화될 때까지 기다리는 중..."
 sudo kubectl wait --for=condition=ready pod -l app=mariadb --timeout=120s
-
 
 # 6. Kubernetes 앱 리소스 적용
 echo "☸️ Kubernetes 리소스를 배포합니다..."
@@ -69,7 +67,11 @@ sudo kubectl rollout restart deployment/face-login-deployment
 sudo kubectl rollout restart deployment/product-search-deployment
 sudo kubectl rollout restart deployment/worker3-deployment
 
-# 9. 배포 상태 확인
+# 9. 대시보드 배포
+echo "📊 대시보드를 배포합니다..."
+bash ~/Docker_project/deploy-dashboard.sh
+
+# 10. 배포 상태 확인
 echo "⏳ 배포 완료! 파드 상태를 확인합니다..."
 sleep 10
 sudo kubectl get pods -o wide
