@@ -143,11 +143,19 @@ sleep 30
 GRAFANA_URL="http://$MASTER_IP:31081"
 
 echo "🔗 Loki 데이터소스 추가 중..."
-GRAFANA_UID=$(curl -s -X POST "$GRAFANA_URL/api/datasources" \
-    -H "Content-Type: application/json" \
-    -u admin:admin \
-    -d '{"name":"Loki","type":"loki","url":"http://loki-gateway:80","access":"proxy"}' | \
-    python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasource',{}).get('uid','') or d.get('uid',''))" 2>/dev/null || echo "")
+# 기존 Loki 데이터소스 UID 조회
+GRAFANA_UID=$(curl -s "$GRAFANA_URL/api/datasources/name/Loki" \
+    -u admin:admin | \
+    python3 -c "import sys,json; print(json.load(sys.stdin).get('uid',''))" 2>/dev/null || echo "")
+
+# 없으면 새로 추가
+if [ -z "$GRAFANA_UID" ]; then
+    GRAFANA_UID=$(curl -s -X POST "$GRAFANA_URL/api/datasources" \
+        -H "Content-Type: application/json" \
+        -u admin:admin \
+        -d '{"name":"Loki","type":"loki","url":"http://loki-gateway:80","access":"proxy"}' | \
+        python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasource',{}).get('uid',''))" 2>/dev/null || echo "")
+fi
 
 echo "🔑 API 토큰 발급 중..."
 SA_TIMESTAMP=$(date +%s)
