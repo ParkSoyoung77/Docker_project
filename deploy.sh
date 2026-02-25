@@ -5,7 +5,6 @@ set -e
 # --- [설정부] ---
 MASTER_IP=$(hostname -I | awk '{print $1}')
 REGISTRY="$MASTER_IP:5000"
-HELM="sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm"
 
 echo "🌐 레지스트리 주소: $REGISTRY"
 
@@ -113,11 +112,16 @@ sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install promtail grafan
 # 8.11 k9s 설치
 echo "🖥️ k9s 설치 중..."
 if ! command -v k9s &> /dev/null; then
-    curl -sS https://webinstall.dev/k9s | bash 2>/dev/null || true
-    source ~/.bashrc 2>/dev/null || true
+    wget -q https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz
+    tar -xzf k9s_Linux_amd64.tar.gz
+    sudo mv k9s /usr/local/bin/
+    rm -f k9s_Linux_amd64.tar.gz
 else
     echo "✅ k9s 이미 설치됨"
 fi
+
+# k3s kubeconfig 권한 설정 (k9s 접근용)
+sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 
 # 8.12 Grafana 설치
 echo "📊 Grafana 설치 중 (포트: 31081)..."
