@@ -8,8 +8,12 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">상품 관리 시스템</a>
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="navbar-brand" href="/product">상품 관리 시스템</a>
+            <form class="d-flex" action="/product/search" method="get">
+                <input class="form-control me-2" type="search" name="q" placeholder="AI 검색..." required>
+                <button class="btn btn-outline-light" type="submit">검색</button>
+            </form>
         </div>
     </nav>
     <main class="container">
