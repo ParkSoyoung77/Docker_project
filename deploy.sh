@@ -5,7 +5,7 @@ set -e
 # --- [설정부] ---
 MASTER_IP=$(hostname -I | awk '{print $1}')
 REGISTRY="$MASTER_IP:5000"
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+HELM="sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm"
 
 echo "🌐 레지스트리 주소: $REGISTRY"
 
@@ -36,7 +36,7 @@ build_and_push "auth-app" "./src/auth-app" "v2"
 build_and_push "product-app" "./src/product-app" "v1.1"
 build_and_push "worker3" "./src/worker-notion" "latest"
 
-# 4. MariaDB 먼저 배포 (앱보다 DB가 먼저 떠야 함)
+# 4. MariaDB 먼저 배포
 echo "📦 MariaDB 인프라를 배포합니다..."
 sudo kubectl apply -f ./k3s-manifests/01-db/mariadb-full-setup.yaml
 sudo kubectl apply -f ./k3s-manifests/02-apps/chromadb-setup.yaml
@@ -74,7 +74,6 @@ bash ~/Docker_project/deploy-dashboard.sh
 # 8.6 메트릭 서버 설치
 echo "📈 메트릭 서버를 설치합니다..."
 sudo kubectl apply -f ./k3s-manifests/04-monitoring/components.yaml
-echo "⏳ 메트릭 서버 파드 확인 중..."
 sudo kubectl get pods -n kube-system -l k8s-app=metrics-server
 
 # 8.7 Helm 설치 확인 및 설치
@@ -87,13 +86,13 @@ fi
 
 # 8.8 Helm 저장소 추가 및 업데이트
 echo "📦 Helm 저장소 추가 및 업데이트..."
-helm repo add grafana https://grafana.github.io/helm-charts 2>/dev/null || true
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
-helm repo update
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm repo add grafana https://grafana.github.io/helm-charts 2>/dev/null || true
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm repo update
 
 # 8.9 Loki 설치
 echo "📋 Loki 설치 중..."
-helm upgrade --install loki grafana/loki \
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install loki grafana/loki \
     --set loki.auth_enabled=false \
     --set deploymentMode=SingleBinary \
     --set loki.commonConfig.replication_factor=1 \
@@ -108,7 +107,7 @@ helm upgrade --install loki grafana/loki \
 
 # 8.10 Promtail 설치
 echo "📋 Promtail 설치 중..."
-helm upgrade --install promtail grafana/promtail \
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install promtail grafana/promtail \
     --set "config.clients[0].url=http://loki-gateway/loki/api/v1/push"
 
 # 8.11 k9s 설치
@@ -122,38 +121,30 @@ fi
 
 # 8.12 Grafana 설치
 echo "📊 Grafana 설치 중 (포트: 31081)..."
-helm upgrade --install my-grafana grafana/grafana \
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install my-grafana grafana/grafana \
     --set service.type=NodePort \
     --set service.nodePort=31081 \
     --set adminPassword=admin
 
 # 8.13 Prometheus 설치
 echo "🔥 Prometheus 설치 중..."
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
     -n monitoring --create-namespace
 
 # 8.14 Grafana 토큰 자동 발급 및 .env 업데이트
 echo "🔑 Grafana 토큰 자동 발급 중..."
-echo "⏳ Grafana가 뜰 때까지 대기 중..."
 sudo kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --timeout=180s 2>/dev/null || true
-
 sleep 10
 
 GRAFANA_URL="http://$MASTER_IP:31081"
 
-# Loki 데이터소스 추가 및 UID 획득
 echo "🔗 Loki 데이터소스 추가 중..."
 GRAFANA_UID=$(curl -s -X POST "$GRAFANA_URL/api/datasources" \
     -H "Content-Type: application/json" \
     -u admin:admin \
-    -d '{
-        "name": "Loki",
-        "type": "loki",
-        "url": "http://loki-gateway:80",
-        "access": "proxy"
-    }' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasource',{}).get('uid','') or d.get('uid',''))" 2>/dev/null || echo "")
+    -d '{"name":"Loki","type":"loki","url":"http://loki-gateway:80","access":"proxy"}' | \
+    python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasource',{}).get('uid','') or d.get('uid',''))" 2>/dev/null || echo "")
 
-# API 토큰 발급
 echo "🔑 API 토큰 발급 중..."
 GRAFANA_TOKEN=$(curl -s -X POST "$GRAFANA_URL/api/auth/keys" \
     -H "Content-Type: application/json" \
