@@ -2,9 +2,10 @@ import os
 import time
 import requests
 import mysql.connector
+import chromadb
 from openai import OpenAI
 
-# 1. 환경 변수 로드 (Kubernetes Secret을 통해 주입)
+# 1. 환경 변수 로드
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("NOTION_DB_ID")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
@@ -17,6 +18,11 @@ NOTION_HEADERS = {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json"
 }
+
+def get_chroma_collection():
+    """ChromaDB 컬렉션을 반환합니다."""
+    chroma_client = chromadb.HttpClient(host="chromadb-service", port=8000)
+    return chroma_client.get_or_create_collection(name="products")
 
 def get_db_connection():
     """MariaDB 연결 객체를 반환합니다."""
@@ -55,8 +61,16 @@ def get_gpt_description(name, category):
         print(f"⚠️ GPT 에러: {e}")
         return "멋진 상품입니다!"
 
+def get_embedding(text):
+    """OpenAI 임베딩을 생성합니다."""
+    response = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input=text
+    )
+    return response.data[0].embedding
+
 def insert_to_db(product_data):
-    """MariaDB에 데이터를 저장합니다."""
+    """MariaDB에 데이터를 저장하고 id를 반환합니다."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -66,12 +80,31 @@ def insert_to_db(product_data):
         """
         cursor.execute(sql, product_data)
         conn.commit()
-        print(f"✅ MariaDB 저장 성공: {product_data[0]}")
+        product_id = cursor.lastrowid
+        print(f"✅ MariaDB 저장 성공: {product_data[0]} (id={product_id})")
+        return product_id
     except mysql.connector.Error as err:
         print(f"❌ DB 저장 에러: {err}")
+        return None
     finally:
         if 'conn' in locals() and conn.is_connected():
             conn.close()
+
+def insert_to_chroma(product_id, name, category, description):
+    """ChromaDB에 벡터를 저장합니다."""
+    try:
+        collection = get_chroma_collection()
+        text = f"{name} {category} {description}"
+        embedding = get_embedding(text)
+        collection.upsert(
+            ids=[str(product_id)],
+            embeddings=[embedding],
+            metadatas=[{"name": name, "category": category, "description": description}],
+            documents=[text]
+        )
+        print(f"✅ ChromaDB 저장 성공: {name}")
+    except Exception as e:
+        print(f"⚠️ ChromaDB 저장 에러: {e}")
 
 def update_notion_page(page_id, name, category, price, description, stock, image_url):
     """MariaDB 데이터로 노션 페이지를 업데이트합니다."""
@@ -111,14 +144,14 @@ def get_db_product(name):
 
 def main():
     print("🚀 Worker3 배달원이 노션을 감시 중입니다...")
-    
+
     while True:
         url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
         response = requests.post(url, headers=NOTION_HEADERS)
 
         if response.status_code == 200:
             pages = response.json().get('results', [])
-            
+
             for page in pages:
                 props = page.get('properties', {})
                 page_id = page.get('id')
@@ -146,7 +179,7 @@ def main():
                             )
                         continue
 
-                    # [Case 2] 노션에만 있는 새 상품 → GPT description 생성 후 MariaDB INSERT + 노션 업데이트
+                    # [Case 2] 새 상품 → GPT description → MariaDB INSERT → ChromaDB 저장 → 노션 업데이트
                     category = (props.get('category', {}).get('select') or {}).get('name', '미분류')
                     price = props.get('price', {}).get('number') or 0
                     stock = props.get('stock', {}).get('number') or 0
@@ -156,15 +189,16 @@ def main():
                     description = get_gpt_description(name, category)
 
                     product_data = (name, category, price, description, stock, image_url)
-                    insert_to_db(product_data)
+                    product_id = insert_to_db(product_data)
 
-                    # 노션 description도 업데이트
+                    if product_id:
+                        insert_to_chroma(product_id, name, category, description)
+
                     update_notion_page(page_id, name, category, price, description, stock, image_url)
 
                 except Exception as e:
                     print(f"⚠️ 데이터 처리 중 오류: {e}")
 
-        # 30초마다 한 번씩 노션 확인
         time.sleep(30)
 
 if __name__ == "__main__":
