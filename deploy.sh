@@ -5,6 +5,7 @@ set -e
 # --- [설정부] ---
 MASTER_IP=$(hostname -I | awk '{print $1}')
 REGISTRY="$MASTER_IP:5000"
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
 echo "🌐 레지스트리 주소: $REGISTRY"
 
@@ -134,8 +135,7 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 # 8.14 Grafana 토큰 자동 발급 및 .env 업데이트
 echo "🔑 Grafana 토큰 자동 발급 중..."
 echo "⏳ Grafana가 뜰 때까지 대기 중..."
-sudo kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --timeout=180s 2>/dev/null || \
-sudo kubectl wait --for=condition=ready pod -l "app.kubernetes.io/name=grafana" --timeout=180s 2>/dev/null || true
+sudo kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --timeout=180s 2>/dev/null || true
 
 sleep 10
 
@@ -176,7 +176,7 @@ echo "   UID: $GRAFANA_UID"
 # 9. 배포 상태 확인
 echo "⏳ 배포 완료! 파드 상태를 확인합니다..."
 sleep 10
-sudo kubectl get pods -o wide
+sudo kubectl get pods -A
 sudo kubectl get svc
 sudo kubectl get ingress
 
